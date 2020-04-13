@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=aws_ecs_deploy
+POSTGRES_USER=ijqMHHwxondYmdEMKIhDpTzNBkuONwKx
+POSTGRES_PASSWORD=98Y3d9pH3HTvOCHZ8lQmmOgNuOWWyPxvkYc6HfmfyNGTyOKY6svciDHD5KcGRF6x
