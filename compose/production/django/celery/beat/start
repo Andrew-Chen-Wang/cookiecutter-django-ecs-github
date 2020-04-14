@@ -28,13 +28,11 @@ try:
         "select exists(select * from ${POSTGRES_DB}.tables where table_name=%s)",
         ('django_celery_beat_periodictask',)
     )
-    if cur.fetchone()[0]:
-        sys.exit(0)
-    else:
-        sys.exit(-1)
 
-except psycopg2.OperationalError:
+except (psycopg2.OperationalError, psycopg2.errors.UndefinedTable):
     sys.exit(-1)
+
+sys.exit(0)
 
 END
 }

@@ -2,7 +2,6 @@ dist: xenial
 
 services:
   - docker
-  - postgresql
 
 language: python
 python:
@@ -10,19 +9,14 @@ python:
 
 jobs:
   include:
-    - stage: "Django Test"
-      before_install:
-        - sudo apt-get update -qq
-        - sudo apt-get install -qq build-essential gettext python-dev zlib1g-dev libpq-dev xvfb
-        - sudo apt-get install -qq libjpeg8-dev libfreetype6-dev libwebp-dev
-        - sudo apt-get install -qq graphviz-dev python-setuptools python3-dev python-virtualenv python-pip
-        - sudo apt-get install -qq firefox automake libtool libreadline6 libreadline6-dev libreadline-dev
-        - sudo apt-get install -qq libsqlite3-dev libxml2 libxml2-dev libssl-dev libbz2-dev wget curl llvm
-      install:
-        - pip install -r requirements/local.txt
-      script:
-        - "pytest"
+    - script:
+        - docker-compose -v
+        - docker -v
+        - docker-compose -f local.yml build
+        - docker-compose -f local.yml up -d
+        - docker-compose -f local.yml run --rm django pytest
+        - docker-compose -f local.yml logs
+      name: "Django Test"
 
-    - stage: "Dockerfile Deploy"
-      script:
-        - docker build -t cookiecutter:1.0 .
+    - script: docker build -t cookiecutter:1.0 .
+      name: "Dockerfile Deploy"
