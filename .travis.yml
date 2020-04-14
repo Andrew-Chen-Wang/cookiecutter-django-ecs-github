@@ -1,0 +1,25 @@
+dist: xenial
+
+services:
+  - docker
+
+language: python
+python:
+  - "3.7"
+
+jobs:
+  include:
+    - stage: "Django Test"
+      before_install:
+        - docker-compose -v
+        - docker -v
+      before_script:
+        - docker-compose -f local.yml build
+        - docker-compose -f local.yml run --rm django python manage.py migrate
+        - docker-compose -f local.yml up -d
+      script:
+        - docker-compose -f local.yml run --rm django pytest
+
+    - stage: "Dockerfile Deploy"
+      script:
+        - docker build -t cookiecutter:1.0 .
