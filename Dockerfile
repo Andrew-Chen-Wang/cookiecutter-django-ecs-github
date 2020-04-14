@@ -81,7 +81,7 @@ RUN sed -i 's/\r$//g' /start-celerybeat
 RUN chmod +x /start-celerybeat
 RUN chown django /start-celerybeat
 
-COPY ./compose/production/celery/flower/start /start-flower
+COPY ./compose/production/django/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 COPY --from=aws --chown=django:django /app /app
