@@ -74,6 +74,23 @@ Initial Cookiecutter Generation
     keep_local_envs_in_vcs [y]:
     debug [n]:
 
+Which things can you add?
+-------------------------
+
+All configurations are OK! Except for using other hosts
+like Heroku and GCP. But don't add to many, i.e.
+I'd avoid the JS task runner.
+
+When creating your new cookiecutter-django
+project, you should stick with the Docker option. This
+is so that you can have a local docker compose file
+to use during local development. This repository provides
+files like the .github/workflows/aws.yml for ECS
+deployment and a sample appspec.yml file for demonstration.
+
+Just know that PostgreSQL and Redis and other stuff has
+to be serviced by AWS ElastiCache or your own EC2 clusters.
+
 Basic Commands
 --------------
 
@@ -107,3 +124,5 @@ Deployment
 ----------
 
 The following details how to deploy this application.
+
+TODO Need to add documentation on how I set up deployment.
