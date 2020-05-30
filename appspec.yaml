@@ -4,3 +4,12 @@ os: linux
 files:
   - source: /
     destination: /code
+
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:ecs:us-east-2:*:task-definition/application-stack:*"
+        LoadBalancerInfo:
+          ContainerName: "nginx"
+          ContainerPort: 80
