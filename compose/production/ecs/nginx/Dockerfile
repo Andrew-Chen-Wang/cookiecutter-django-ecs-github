@@ -1,2 +1,2 @@
 FROM nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY ./compose/production/ecs/nginx/nginx.conf /etc/nginx/nginx.conf
