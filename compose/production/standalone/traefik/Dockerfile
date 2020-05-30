@@ -1,3 +1,5 @@
+# Use this if you do this with plain EC2
+
 FROM traefik:v2.0
 RUN mkdir -p /etc/traefik/acme
 RUN touch /etc/traefik/acme/acme.json

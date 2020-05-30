@@ -274,6 +274,6 @@ aws_ecs_deploy/media/
 
 
 .ipython/
-.env
-.envs/*
+!.env
+!.envs/*
 !.envs/.local/

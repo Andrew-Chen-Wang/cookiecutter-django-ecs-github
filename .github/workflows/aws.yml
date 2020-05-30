@@ -1,55 +1,33 @@
 # This workflow will build and push a new container image to Amazon ECR,
 # and then will deploy a new task definition to Amazon ECS, when a release is created
 #
-# To use this workflow, you will need to complete the following set-up steps:
-#
-# 1. Create an ECR repository to store your images.
-#    For example: `aws ecr create-repository --repository-name my-ecr-repo --region us-east-2`.
-#    Replace the value of `ECR_REPOSITORY` in the workflow below with your repository's name.
-#    Replace the value of `aws-region` in the workflow below with your repository's region.
-#
-# 2. Create an ECS task definition, an ECS cluster, and an ECS service.
-#    For example, follow the Getting Started guide on the ECS console:
-#      https://us-east-2.console.aws.amazon.com/ecs/home?region=us-east-2#/firstRun
-#    Replace the values for `service` and `cluster` in the workflow below with your service and cluster names.
-#
-# 3. Store your ECS task definition as a JSON file in your repository.
-#    The format should follow the output of `aws ecs register-task-definition --generate-cli-skeleton`.
-#    Replace the value of `task-definition` in the workflow below with your JSON file's name.
-#    Replace the value of `container-name` in the workflow below with the name of the container
-#    in the `containerDefinitions` section of the task definition.
-#
-# 4. Store an IAM user access key in GitHub Actions secrets named `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
-#    See the documentation for each action used below for the recommended IAM policies for this IAM user,
-#    and best practices on handling the access key credentials.
+# For more configuration, check the action out here:
+# https://github.com/aws-actions/amazon-ecs-deploy-task-definition
+# From there, you can add an appspec.yaml and other stuff AWS GH Action offers.
 
-on:
-  release:
-    types: [created]
+# FIXME For now, let's just deploy on master since I don't wanna wait for Travis.
 
 name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      # Trigger this workflow on master push
+      - '**'
+      # Except when ONLY these dirs are changed
+      - '!docs/**'
+      - '!local.yml'
+
+      # Any workflow file EXCEPT for this one will not trigger this workflow.
+      - '!.github/workflows/**'
+      - '.github/workflows/aws.yml'
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-
-    steps:
-    - name: Check commit status
-      id: commit-status
-      run: |
-        # Check the status of the Git commit
-        CURRENT_STATUS=$(curl --url https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/status --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' | jq -r '.state');
-        echo "Current status is: $CURRENT_STATUS"
-        while [ "${CURRENT_STATUS^^}" = "PENDING" ];
-          do sleep 10;
-          CURRENT_STATUS=$(curl --url https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }}/status --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' | jq -r '.state');
-        done;
-        echo "Current status is: $CURRENT_STATUS"
-        if [ "${CURRENT_STATUS^^}" = "FAILURE" ];
-          then echo "Commit status failed. Canceling execution";
-          exit 1;
-        fi
 
     - name: Checkout
       uses: actions/checkout@v2
@@ -59,17 +37,44 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        # TODO Change your AWS region here!
         aws-region: us-east-2
 
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
+    # Build nginx
+    # -------------------------------------------------------
+    - name: Build, tag, and push nginx image to Amazon ECR
+      id: build-nginx-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: my-ecr-repo
+        ECR_REPOSITORY: nginx-reverse-proxy
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker build -f compose/production/ecs/nginx/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Fill in the new nginx image ID in the Amazon ECS task definition
+      id: fill-nginx-image
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: aws-task-definition.json
+        container-name: nginx
+        image: ${{ steps.build-nginx-image.outputs.image }}
+
+    # Build Django app
+    # -------------------------------------------------------
+    - name: Build, tag, and push Django image to Amazon ECR
+      id: build-django-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: django-app
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and
@@ -79,18 +84,21 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task-def
+    - name: Fill in the new Django image ID in the Amazon ECS task definition
+      id: fill-django-image
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: cookiecutter-django-task-definition.json
-        container-name: sample-app
-        image: ${{ steps.build-image.outputs.image }}
+        task-definition: ${{ steps.fill-nginx-image.outputs.task-definition }}
+        container-name: django-app
+        image: ${{ steps.build-django-image.outputs.image }}
 
+    # Deploy
+    # -------------------------------------------------------
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: sample-app-service
-        cluster: default
+        task-definition: ${{ steps.fill-django-image.outputs.task-definition }}
+        # TODO Change the service and cluster name if you changed it
+        service: cookiecutter-django-service
+        cluster: cookiecutter-django
         wait-for-service-stability: true

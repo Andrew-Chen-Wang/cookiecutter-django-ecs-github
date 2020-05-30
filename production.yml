@@ -1,52 +1,54 @@
+# If you want to build PostgreSQL and Redis on here...
+# Use the task definition for more container builds.
+  # I recommend just using ElastiCache and RDS.
+  # However, you can also get away with building everything
+  # in the GitHub action.
+  # I've left the images and Dockerfile locations in here instead
+  # of deleting these.
+
 version: '3'
 
-volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
-  production_traefik: {}
+#volumes:
+#  production_postgres_data: {}
+#  production_postgres_data_backups: {}
 
 services:
   django: &django
     build:
       context: .
-      dockerfile: ./compose/production/django/Dockerfile
+      dockerfile: compose/production/standalone/django/Dockerfile
     image: aws_ecs_deploy_production_django
-    depends_on:
-      - postgres
-      - redis
-    env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
+#    Use Parameter Store or Secrets Manager.
+#    env_file:
+#      - ./.envs/.production/.django
+#      - ./.envs/.production/.postgres
     command: /start
 
-  postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: aws_ecs_deploy_production_postgres
-    volumes:
-      - production_postgres_data:/var/lib/postgresql/data
-      - production_postgres_data_backups:/backups
-    env_file:
-      - ./.envs/.production/.postgres
+#  postgres:
+#    build:
+#      context: .
+#      dockerfile: ./compose/production/postgres/Dockerfile
+#    image: aws_ecs_deploy_production_postgres
+#    volumes:
+#      - production_postgres_data:/var/lib/postgresql/data
+#      - production_postgres_data_backups:/backups
+#    env_file:
+#      - ./.envs/.production/.postgres
+#  awscli:
+#    build:
+#      context: .
+#      dockerfile: ./compose/production/aws/Dockerfile
+#    env_file:
+#      - ./.envs/.production/.django
+#    volumes:
+#      - production_postgres_data_backups:/backups
 
-  traefik:
-    build:
-      context: .
-      dockerfile: ./compose/production/traefik/Dockerfile
-    image: aws_ecs_deploy_production_traefik
-    depends_on:
-      - django
-    volumes:
-      - production_traefik:/etc/traefik/acme
-    ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
-      - "0.0.0.0:5555:5555"
+#  redis:
+#    image: redis:5.0
 
-  redis:
-    image: redis:5.0
-
+  # You aren't using these in the Dockerfile. Trust me.
+  # Read the FAQ section of README to find out how to
+  # do the celery stuff
   celeryworker:
     <<: *django
     image: aws_ecs_deploy_production_celeryworker
@@ -57,17 +59,10 @@ services:
     image: aws_ecs_deploy_production_celerybeat
     command: /start-celerybeat
 
-  flower:
-    <<: *django
-    image: aws_ecs_deploy_production_flower
-    command: /start-flower
-
-  
-  awscli:
-    build:
-      context: .
-      dockerfile: ./compose/production/aws/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
-    volumes:
-      - production_postgres_data_backups:/backups
+#  I don't recommend using Flower. If you use Flower,
+  # you should just deploy to EC2 instead of ECS.
+  # For EC2 deployment, just SSH and rsync your files over.
+#  flower:
+#    <<: *django
+#    image: aws_ecs_deploy_production_flower
+#    command: /start-flower

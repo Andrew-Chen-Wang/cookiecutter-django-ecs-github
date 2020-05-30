@@ -1,0 +1,52 @@
+# General
+# ------------------------------------------------------------------------------
+# DJANGO_READ_DOT_ENV_FILE=True
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_SECRET_KEY=GilqoorvQuWLqaYvJgXjS7ymbcqdCjhiCoKg91y8TDwiHDnkS9O3xYah0wTorwrx
+DJANGO_ADMIN_URL=gIPs1tFumkSPodIvTkyeYxSvAYbQUhGT/
+DJANGO_ALLOWED_HOSTS=.asdfasq.de
+
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# Email
+# ------------------------------------------------------------------------------
+# You don't need to put this in if you're just testing
+# if the website actually works... I mean that's why I commented
+# it out.
+DJANGO_SERVER_EMAIL=
+
+
+# AWS
+# ------------------------------------------------------------------------------
+# You need to create an S3 bucket
+DJANGO_AWS_STORAGE_BUCKET_NAME=
+
+# Don't use these because your EC2 machines
+# should automatically have an IAM role attached already.
+# DJANGO_AWS_ACCESS_KEY_ID=
+# DJANGO_AWS_SECRET_ACCESS_KEY=
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+
+# Redis
+# ------------------------------------------------------------------------------
+# I've just commented out the Redis portion.
+# REDIS_URL=redis://redis:6379/0
+
+# Celery
+# ------------------------------------------------------------------------------
+
+# Flower
+CELERY_FLOWER_USER=HZXtuQrSgeqfpgcKODqRaXhLYeXPcZAD
+CELERY_FLOWER_PASSWORD=4cwIWB9fFWy3Ymtxbw6rpmBtuLNMslkMVpK0XPM2QWwwvMrLrOVzliTzJpmCA49f
+

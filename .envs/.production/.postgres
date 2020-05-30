@@ -1,0 +1,11 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+DATABASE_URL=sqlite:///db.sqlite3
+# I've made the database into a SQLite DB
+# so you really don't need these.
+# Don't worry, I didn't delete the code.
+# POSTGRES_HOST=postgres
+# POSTGRES_PORT=5432
+# POSTGRES_DB=aws_ecs_deploy
+# POSTGRES_USER=ijqMHHwxondYmdEMKIhDpTzNBkuONwKx
+# POSTGRES_PASSWORD=vXDxfIfAztp2nEhaZvNUgcb4uEwzUzuHG9l7J0Gbu3IaOaqipz37iT7wvZ5vV9nZ

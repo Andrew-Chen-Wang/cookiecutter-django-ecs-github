@@ -24,7 +24,7 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
+      dockerfile: ./compose/production/standalone/postgres/Dockerfile
     image: aws_ecs_deploy_production_postgres
     volumes:
       - local_postgres_data:/var/lib/postgresql/data
@@ -41,7 +41,7 @@ services:
     depends_on:
       - redis
       - postgres
-      
+
     ports: []
     command: /start-celeryworker
 
@@ -51,7 +51,7 @@ services:
     depends_on:
       - redis
       - postgres
-      
+
     ports: []
     command: /start-celerybeat
 

@@ -1,0 +1,31 @@
+{
+  "containerDefinitions": [
+     {
+       "name": "nginx",
+       "image": "filled-in-by-gh-action",
+       "memory": "256",
+       "cpu": "256",
+       "essential": true,
+       "portMappings": [
+         {
+           "containerPort": "80",
+           "protocol": "tcp"
+         }
+       ],
+       "links": [
+         "django-app"
+       ]
+     },
+     {
+       "name": "django-app",
+       "image": "filled-in-by-gh-action",
+       "memory": "256",
+       "cpu": "256",
+       "essential": true
+     }
+  ],
+  "volumes": [],
+  "networkMode": "bridge",
+  "placementConstraints": [],
+  "family": "application-stack"
+}
