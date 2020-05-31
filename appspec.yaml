@@ -1,0 +1,10 @@
+version: 0.0
+
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: "arn:aws:ecs:us-east-2:542979720405:task-definition/application-stack:1"
+        LoadBalancerInfo:
+          ContainerName: "nginx"
+          ContainerPort: 80

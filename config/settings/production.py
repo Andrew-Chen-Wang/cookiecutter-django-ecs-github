@@ -1,5 +1,50 @@
+import os
+
+from boto3 import client
+
 from .base import *  # noqa
 from .base import env
+
+
+def _set_env_variables(**get_kwargs):
+    """From https://github.com/christippett/ssm-parameter-store/"""
+    def extract_parameter(parameter):
+        """
+        Parameter Store returns a special dict.
+        so the variables must be extracted.
+        """
+        key = parameter["Name"]
+        key_parts = key.split("/")
+        # Get the environment variable from the end of path
+        key = key_parts[-1]
+        value = parameter["Value"]
+        if parameter["Type"] == "StringList":
+            value = value.split(",")
+        return key, value
+
+    ssm = client("ssm")
+
+    parameters = []
+    while True:
+        result = ssm.get_parameters_by_path(**get_kwargs)
+        parameters += result.get("Parameters")
+        next_token = result.get("NextToken")
+        if next_token is None:
+            break
+        get_kwargs.update({"NextToken": next_token})
+
+    # Extract token and set in environment.
+    parameter_dict = dict(extract_parameter(p) for p in parameters)
+
+    for k, v in parameter_dict.items():
+        os.environ.setdefault(k, v)
+
+
+# TODO You should probably encrypt all these variables
+#  since they are only set once.
+_set_env_variables(
+    **dict(Path="/cookiecutter-django/ecs/", WithDecryption=False, Recursive=True)
+)
 
 # GENERAL
 # ------------------------------------------------------------------------------

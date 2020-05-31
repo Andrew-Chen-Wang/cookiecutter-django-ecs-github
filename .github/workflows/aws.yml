@@ -5,6 +5,10 @@
 # https://github.com/aws-actions/amazon-ecs-deploy-task-definition
 # From there, you can add an appspec.yaml and other stuff AWS GH Action offers.
 
+# Image tags use latest instead of commit sha since we have a repository
+# with all commits anyways. We deploy on every master push.
+# With that justification, we will simply replace the tags.
+
 # FIXME For now, let's just deploy on master since I don't wanna wait for Travis.
 
 name: Deploy to Amazon ECS
@@ -52,7 +56,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: nginx-reverse-proxy
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: latest
       run: |
         # Build a docker container and
         # push it to ECR so that it can
@@ -76,7 +80,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: django-app
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: latest
       run: |
         # Build a docker container and
         # push it to ECR so that it can
