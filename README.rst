@@ -86,24 +86,29 @@ in the repo's settings. The credentials' names MUST be:
     aws ecr create-repository --repository-name nginx-reverse-proxy --region us-east-2
     aws ecr create-repository --repository-name django-app --region us-east-2
 
-Replace the region with your AWS region, and make sure you change it in
-`.github/workflows/aws.yml`, file as well.
+Replace the region with your AWS region, and make sure you change it in the
+`.github/workflows/aws.yml` file, as well.
 
 3. Create an ECS cluster.
 Replace the values for `cluster` in the aws workflow
-with your cluster name. The default is cookiecutter-django.
-I guess you could just write that one and not need to change the
-one in the GH action.
+with your cluster name. The default is "cookiecutter-django".
+I guess you could just write that one and not need to change
+the one in the GH action.
 
 - Choose EC2 Linux + Networking
 - To stay in the free tier, I chose t2.micro for the instance type
+- You can just have one instance since Blue/Green deployments
+  will provision a new instance and deregister the old one.
+    - That's the downfall about ECS. You can configure everything
+      in your Dockerfile, but it's a slow build and start time and
+      you wish the instance could just simply be updated...
 - I had a key pair from previous EC2 usage. You don't necessarily need it
   but it could be helpful to have on in the future. Yes, you can configure
   an ssh key pair in the future.
 - Create a new VPC
 - Choose a subnet. Remember which subnet it is.
-- Choose more than one instance, e.g. 2, so that Blue/Green deployment works.
-- Note your security group! You'll need it for ALB!
+- Create and note your NEW security group! You'll need it for ALB!
+- The IAM role can be the one created by them called ecsInstanceRole.
 
 4. Buy a website in Route 53.
 
@@ -117,7 +122,12 @@ Change allowed hosts in `config/settings/production.py` to your domain.
 Change every instance of asdfasq.de in `compose/production/ecs/nginx/nginx.conf`
 to your domain.
 
-5. Create the ALB, or Application Load Balancer with ACM
+5. Configure ACM for https for your domain.
+
+4. Find ACM (certificate manager) and add your domain and
+its www. format, as well.
+
+6. Create the ALB, or Application Load Balancer with ACM
 
 NOTE: I might be missing a step with the certificate manager. I deployed
 a test website on EC2 as a standalone, and I might've done something to
@@ -144,14 +154,14 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
   says `Add to Registered`.
 - Finally, create it.
 
-6. Create a task definition.
+7. Create a task definition.
 
 Go to the `aws-task-definition.json` file and copy its contents.
 
 In the ECS dashboard, create a new task definition. Scroll to the
-bottom until you find configure via JSON. Paste the contents.
+bottom until you find "configure via JSON." Paste the contents.
 
-7. Create an ECS service.
+8. Create an ECS service.
 
 After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
@@ -204,18 +214,14 @@ tab. Create a service.
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-8. Register your second instance to your second target group.
-
-Go to the EC2 dashboard. Find target group. Add your second instance
-and make sure it's still registering on port 80.
-
 9. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
-You'll need to add the parameters from `.envs/.production/.django`
-and `.envs/.production/.postgres`.
+You'll need to add the parameters from `.envs/.production/template.django`.
 
 I've noted which ones YOU should add.
+
+10. Finally, commit to your repository and let your code be deployed.
 
 The Caveats in THIS EXAMPLE (easily avoidable)
 ----------------------------------------------

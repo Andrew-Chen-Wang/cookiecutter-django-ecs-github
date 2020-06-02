@@ -4,7 +4,10 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: "arn:aws:ecs:us-east-2:542979720405:task-definition/application-stack:1"
+# TaskDefinition is just a placeholder, but if you manually deploy,
+# then you can follow the Full ARN format below.
+# You should NOT show your real account ID.
+        TaskDefinition: "arn::ecs:<region>:<account id>:task-definition/application-stack:*"
         LoadBalancerInfo:
           ContainerName: "nginx"
           ContainerPort: 80
