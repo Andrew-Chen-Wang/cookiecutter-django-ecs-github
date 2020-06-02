@@ -36,5 +36,6 @@ USER django
 
 WORKDIR /app
 
+ADD . /app
 ENTRYPOINT ["/entrypoint"]
 CMD ["/start"]
