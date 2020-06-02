@@ -17,13 +17,12 @@ Table of contents:
 
 - How does this work?
 - Deployment Instructions
+- Cleanup
 - The Caveats in THIS EXAMPLE (easily avoidable)
 - Initial Cookiecutter Generation
 - Minimal IAM Credentials for ECS
 - Minimal IAM Credentials for Deployment
 - FAQ
-
-Note: all my secrets have been deleted from the repository. Don't worry.
 
 How does this work?
 -------------------
@@ -33,7 +32,7 @@ GitHub action which will use several AWS GH Actions to finally deploy
 your application.
 
 The AWS services that we'll be using are: CodeDeploy, ECS + ECR, Parameter Store,
-IAM, EC2 ALB or Application Load Balancer. CodeDeploy is for deploying from the GH
+IAM, EC2 Application Load Balancer. CodeDeploy is for deploying from the GH
 action. ECS + ECR is where our servers will be located. Parameter store will
 be where we store our secrets/environment variables. IAM is for proper
 security measures of the credentials given to the server AND to GitHub for deployment.
@@ -41,12 +40,8 @@ Yes, we need two IAM users, one for GH and the other for ECS. Finally, we need
 ALB for proper Blue/Green deployment assuming you have more than one instance
 in your ECS cluster.
 
-(As I'm writing this, I completely forgot Route 53 and ACM. Please use Route 53
-so that ACM can easily manage your certificate... for free! Plus that's how your
-ALB will easily configure with everything).
-
 I chose ECS because there were GitHub actions for this anyways. However, note
-that this is much slower that simply using EC2. The current Travis configuration
+that this is much slower than simply using EC2. The current Travis configuration
 uses Docker, but my PR in cookiecutter-django should change the configuration
 from Docker based to completely Docker free, erasing 1.5 minutes of CI.
 
@@ -97,6 +92,13 @@ the one in the GH action.
 
 - Choose EC2 Linux + Networking
 - To stay in the free tier, I chose t2.micro for the instance type
+    - The task definition uses a limited amount of memory as celery
+      isn't a main priority here. As you expand, celery will take up
+      more memory and you'll have to increase the memory capacity for
+      the Django app, which means you'll have to use a different
+      instance type.
+    - The current task definition configuration fits in t2.micro but
+      not much else.
 - You can just have one instance since Blue/Green deployments
   will provision a new instance and deregister the old one.
     - That's the downfall about ECS. You can configure everything
@@ -154,14 +156,24 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
   says `Add to Registered`.
 - Finally, create it.
 
-7. Create a task definition.
+7. Create a second target group and add to load balancer.
+
+Underneath the load balancer section, you should find the target group
+section. In there, create a target group with port 8080 using HTTP protocol.
+This is a port that is basically port 80 but like a backup.
+
+Go back to your load balancer, and right click on it. Select forward to.
+
+Add your second target group for protocol HTTP with port 8080.
+
+8. Create a task definition.
 
 Go to the `aws-task-definition.json` file and copy its contents.
 
 In the ECS dashboard, create a new task definition. Scroll to the
 bottom until you find "configure via JSON." Paste the contents.
 
-8. Create an ECS service.
+9. Create an ECS service.
 
 After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
@@ -195,11 +207,8 @@ tab. Create a service.
     - Container to Load Balance:
         - Make sure the container name and port is nginx:80
         - Then press `Add to Load Balancer`
-        - Disable Test Listener.
-    - Choose the target group you made when making your ALB
-      for Target Group 1. For Target Group 2, create a new
-      one and make sure the fields for each target group
-      are the same.
+    - Choose the target groups you made when making your ALB
+      for Target Group 1 and Target Group 2.
     - Service discovery
         - Enable it since you've got a website
         - Create a new, verbose private namespace.
@@ -214,14 +223,33 @@ tab. Create a service.
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-9. Let's add our environment variables.
+10. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
 You'll need to add the parameters from `.envs/.production/template.django`.
 
 I've noted which ones YOU should add.
 
-10. Finally, commit to your repository and let your code be deployed.
+11. Finally, commit to your repository and let your code be deployed.
+
+Cleanup
+-------
+
+If you tested this first on a random GitHub repository, here's how to clean
+those resources up:
+
+- You should delete your created IAM roles or users for this
+test
+- Delete your GitHub secrets
+- Delete your AWS services. Here's a list, in order, of deletion:
+    - Application Load Balancer
+    - Target Groups
+    - EC2 Instances
+    - ECS Service
+    - ECS Cluster
+    - Task definition
+    - CodeDeploy application
+    - AWS Cloud Map namespace
 
 The Caveats in THIS EXAMPLE (easily avoidable)
 ----------------------------------------------

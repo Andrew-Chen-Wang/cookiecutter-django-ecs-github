@@ -3,7 +3,7 @@
      {
        "name": "nginx",
        "image": "filled-in-by-gh-action",
-       "memory": "256",
+       "memory": "128",
        "cpu": "256",
        "essential": true,
        "portMappings": [
