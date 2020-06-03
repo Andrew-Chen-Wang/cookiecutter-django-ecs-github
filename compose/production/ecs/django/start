@@ -4,6 +4,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+export DJANGO_SETTINGS_MODULE="config.settings.production"
 python /app/manage.py collectstatic --noinput
 
 /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
