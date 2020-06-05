@@ -19,6 +19,40 @@
      {
        "name": "django-app",
        "image": "filled-in-by-gh-action",
+       "secrets": [
+         {
+           "name": "DATABASE_URL",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DATABASE_URL"
+         },
+         {
+           "name": "DJANGO_ACCOUNT_ALLOW_REGISTRATION",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_ACCOUNT_ALLOW_REGISTRATION"
+         },
+         {
+           "name": "DJANGO_ADMIN_URL",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_ADMIN_URL"
+         },
+         {
+           "name": "DJANGO_ALLOWED_HOSTS",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_ALLOWED_HOSTS"
+         },
+         {
+           "name": "DJANGO_AWS_STORAGE_BUCKET_NAME",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_AWS_STORAGE_BUCKET_NAME"
+         },
+         {
+           "name": "DJANGO_SECRET_KEY",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_SECRET_KEY"
+         },
+         {
+           "name": "DJANGO_SECURE_SSL_REDIRECT",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/DJANGO_SECURE_SSL_REDIRECT"
+         },
+         {
+           "name": "WEB_CONCURRENCY",
+           "valueFrom": "arn:aws:ssm:us-east-1:542979720405:parameter/cookiecutter-django/ecs/WEB_CONCURRENCY"
+         }
+       ],
        "memory": "256",
        "cpu": "256",
        "essential": true
