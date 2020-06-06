@@ -3,6 +3,10 @@ FROM python:3.8-slim-buster
 
 ENV PYTHONUNBUFFERED 1
 
+# ECS Variable Configuration
+ENV ECS_ENABLE_AWSLOGS_EXECUTIONROLE_OVERRIDE true
+# Must be set in order to use secrets (i.e. since executionRoleArn is specified)
+
 RUN apt-get update \
   # dependencies for building Python packages
   && apt-get install -y build-essential \
