@@ -58,7 +58,7 @@
        "essential": true
      }
   ],
-  "executionRoleArn": "arn:aws:iam::542979720405:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::542979720405:role/ecsInstanceRole",
   "volumes": [],
   "networkMode": "bridge",
   "placementConstraints": [],
