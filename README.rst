@@ -91,14 +91,12 @@ I guess you could just write that one and not need to change
 the one in the GH action.
 
 - Choose EC2 Linux + Networking
-- To stay in the free tier, I chose t2.micro for the instance type
+- I chose t2.medium for the instance type for enough memory.
     - The task definition uses a limited amount of memory as celery
       isn't a main priority here. As you expand, celery will take up
       more memory and you'll have to increase the memory capacity for
       the Django app, which means you'll have to use a different
       instance type.
-    - The current task definition configuration fits in t2.micro but
-      not much else.
 - You can just have one instance since Blue/Green deployments
   will provision a new instance and deregister the old one.
     - That's the downfall about ECS. You can configure everything
@@ -250,8 +248,7 @@ Cleanup
 If you tested this first on a random GitHub repository, here's how to clean
 those resources up:
 
-- You should delete your created IAM roles or users for this
-test
+- You should delete your created IAM roles or users for this test
 - Delete your GitHub secrets
 - Delete your AWS services. Here's a list, in order, of deletion:
     - Application Load Balancer
@@ -269,9 +266,11 @@ The Caveats in THIS EXAMPLE (easily avoidable)
 I didn't want to make ANOTHER image just for Celery; instead, I just used:
 
 .. code-block:: shell
+
     >> celery multi start -A config.celery_app worker beat
 
-I use Sentry to log all my Celery stuff, anyways.
+I use Sentry to log all my Celery stuff, anyways, and it will come with
+cookiecutter-django if you opt-in.
 
 I also use RDS for PostgreSQL and ElastiCache for Redis. You don't HAVE to,
 but that would mean you need to configure some more stuff in the
@@ -351,38 +350,6 @@ Minimal IAM Credentials for ECS
 
 You'll need these permissions for your ECS:
 - S3 Full Access
-- `Parameter store<https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-access.html>`_
-
-The JSON:
-
-.. code-block:: json
-
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:DescribeParameters"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Effect": "Allow",
-                "Action": [
-                    "ssm:GetParameters"
-                ],
-                "Resource": "arn:aws:ssm:<region_name>:<aws_account_id>:parameter/*"
-            }
-        ]
-    }
-
-Notes:
-
-The wildcard in the "arn:aws:ssm:<region_name>:<aws_account_id>:parameter/*"
-is a way to restrict IAM roles from certain parameters. For example,
-the last wildcard could be replaced with COMPANY_NAME_* in which anythin
-with that COMPANY_NAME prefix is allowed to be fetched by the IAM role.
 
 Minimal IAM Credentials for Deployment
 --------------------------------------
@@ -451,7 +418,7 @@ Go to `compose/production/ecs/django/start` and add the line
 If you'd like to troubleshoot your AWS actions, add the
 secret `ACTION_STEP_DEBUG` with value `true`.
 
-`Here is the AWS action doc specifying this<https://github.com/aws-actions/amazon-ecs-deploy-task-definition#troubleshooting>`_
+Here is the AWS action doc specifying this https://github.com/aws-actions/amazon-ecs-deploy-task-definition#troubleshooting
 
 What's this license?
 
