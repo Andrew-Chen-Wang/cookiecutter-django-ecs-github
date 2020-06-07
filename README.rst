@@ -112,7 +112,19 @@ the one in the GH action.
 - Create and note your NEW security group! You'll need it for ALB!
 - The IAM role can be the one created by them called ecsInstanceRole.
 
-4. Buy a website in Route 53.
+4. Grant a service trust relationship for newly created IAM role
+
+In order to add our environment variables via our task definition, we must
+make sure the IAM role (above, hopefully it was ecsInstanceRole)
+can even do a task execution.
+
+Go to your newly created IAM role and click "Trust relationships"
+
+Edit the trust relationship so that, in the "Service" array, you add
+
+"ecs-tasks.amazonaws.com"
+
+5. Buy a website in Route 53.
 
 I bought a random website with a `.de` ending since that came out to be $8.
 My website was `asdfasq.de`. Random, ey?
@@ -124,12 +136,12 @@ Change allowed hosts in `config/settings/production.py` to your domain.
 Change every instance of asdfasq.de in `compose/production/ecs/nginx/nginx.conf`
 to your domain.
 
-5. Configure ACM for https for your domain.
+6. Configure ACM for https for your domain.
 
-4. Find ACM (certificate manager) and add your domain and
+Find ACM (certificate manager) and add your domain and
 its www. format, as well.
 
-6. Create the ALB, or Application Load Balancer with ACM
+7. Create the ALB, or Application Load Balancer with ACM
 
 NOTE: I might be missing a step with the certificate manager. I deployed
 a test website on EC2 as a standalone, and I might've done something to
@@ -156,7 +168,7 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
   says `Add to Registered`.
 - Finally, create it.
 
-7. Create a second target group and add to load balancer.
+8. Create a second target group and add to load balancer.
 
 Underneath the load balancer section, you should find the target group
 section. In there, create a target group with port 8080 using HTTP protocol.
@@ -166,14 +178,14 @@ Go back to your load balancer, and right click on it. Select forward to.
 
 Add your second target group for protocol HTTP with port 8080.
 
-8. Create a task definition.
+9. Create a task definition.
 
 Go to the `aws-task-definition.json` file and copy its contents.
 
 In the ECS dashboard, create a new task definition. Scroll to the
 bottom until you find "configure via JSON." Paste the contents.
 
-9. Create an ECS service.
+10. Create an ECS service.
 
 After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
@@ -223,14 +235,14 @@ tab. Create a service.
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-10. Let's add our environment variables.
+11. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
 You'll need to add the parameters from `.envs/.production/template.django`.
 
 I've noted which ones YOU should add.
 
-11. Finally, commit to your repository and let your code be deployed.
+12. Finally, commit to your repository and let your code be deployed.
 
 Cleanup
 -------
