@@ -2,7 +2,7 @@
 FROM python:3.8-slim-buster
 
 ENV PYTHONUNBUFFERED 1
-EXPOSE 80
+EXPOSE 5000
 
 RUN apt-get update \
   # dependencies for building Python packages
