@@ -29,10 +29,10 @@ How does this work?
 
 The deployment is done through Travis CI which does a sorta webhook to a
 GitHub action which will use several AWS GH Actions to finally deploy
-your application.
+your application. TODO Actually create that webhook.
 
 The AWS services that we'll be using are: CodeDeploy, ECS + ECR, Parameter Store,
-IAM, EC2 Application Load Balancer. CodeDeploy is for deploying from the GH
+IAM, Application Load Balancer. CodeDeploy is for deploying from the GH
 action. ECS + ECR is where our servers will be located. Parameter store will
 be where we store our secrets/environment variables. IAM is for proper
 security measures of the credentials given to the server AND to GitHub for deployment.
@@ -73,6 +73,10 @@ Add the IAM user's credentials to your repo's secrets
 in the repo's settings. The credentials' names MUST be:
 
 `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+
+TODO Create security group for web access.
+
+TODO Create security group that only faces ALB.
 
 2. Create two ECR repositories to store your images by running the following:
 
@@ -158,32 +162,20 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
   go to your EC2 dashboard, find your instance, find the security group.
 - Configure routing:
     - Select new target group
-    - Name is something
+    - Name it something
     - The protocol should be HTTP.
     - Leave health check on default.
-- Register ONE target. Go to the bottom and select that instance.
-  Make sure you register on PORT 80!!!!!! Press the blue button that
-  says `Add to Registered`.
+- Don't register any instance.
 - Finally, create it.
 
-8. Create a second target group and add to load balancer.
-
-Underneath the load balancer section, you should find the target group
-section. In there, create a target group with port 8080 using HTTP protocol.
-This is a port that is basically port 80 but like a backup.
-
-Go back to your load balancer, and right click on it. Select forward to.
-
-Add your second target group for protocol HTTP with port 8080.
-
-9. Create a task definition.
+8. Create a task definition.
 
 Go to the `aws-task-definition.json` file and copy its contents.
 
 In the ECS dashboard, create a new task definition. Scroll to the
 bottom until you find "configure via JSON." Paste the contents.
 
-10. Create an ECS service.
+9. Create an ECS service.
 
 After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
@@ -209,16 +201,15 @@ tab. Create a service.
       It should also, probably, be the only one in that dropdown.
 - Configure Network
     - Choose application load balancer
-    - Health check grace period should be 300. This is because it takes time
-      to actually install all the packages.
-        - This option should be above the choose ALB.
+    - Health check grace period should be 30. This option is above the "choose ALB."
     - For Service IAM Role, I chose AWSServiceRoleForECS. Idk if that'll appear for you though.
     - Select your load balancer
     - Container to Load Balance:
         - Make sure the container name and port is nginx:80
         - Then press `Add to Load Balancer`
+        - Disable test listener
     - Choose the target groups you made when making your ALB
-      for Target Group 1 and Target Group 2.
+      for Target Group 1 and create a second target group.
     - Service discovery
         - Enable it since you've got a website
         - Create a new, verbose private namespace.
@@ -227,20 +218,20 @@ tab. Create a service.
         - The cluster VPC should be the one you had all along.
         - Enable ECS task health propagation
         - DNS records for service discovery should have the
-        container with nginx and TTL be 60 seconds.
+          container with nginx and TTL be 60 seconds.
 - Autoscaling policy. I didn't touch it and just said "Do not adjust".
   You can adjust it later. (I honestly have no idea myself. You shouldn't
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-11. Let's add our environment variables.
+10. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
 You'll need to add the parameters from `.envs/.production/template.django`.
 
-I've noted which ones YOU should add.
+I've noted which ones you should add.
 
-12. Finally, commit to your repository and let your code be deployed.
+11. Finally, commit to your repository and let your code be deployed.
 
 Cleanup
 -------
@@ -416,7 +407,7 @@ Go to `compose/production/ecs/django/start` and add the line
 `celery multi start worker beat -A config.celery_app`
 
 If you'd like to troubleshoot your AWS actions, add the
-secret `ACTION_STEP_DEBUG` with value `true`.
+secret `ACTION_STEP_DEBUG` with value `true` to your GitHub repo.
 
 Here is the AWS action doc specifying this https://github.com/aws-actions/amazon-ecs-deploy-task-definition#troubleshooting
 
@@ -438,7 +429,7 @@ You may also have to go to CodeDeploy and delete the Application there, too.
 Are you experienced in AWS?
 
 Absolutely not. This would be my first time actually using AWS besides
-self hosting. This was just a nice learning experience that seems sooooo
+self hosting on one instace. This was just a nice learning experience that seems sooooo
 painful for start ups. In other words, STARTUPS! Get moving! I just gave
 you a free repo to copy off of :)
 
