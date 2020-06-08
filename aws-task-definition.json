@@ -53,8 +53,8 @@
            "valueFrom": "arn:aws:ssm:us-east-2:542979720405:parameter/cookiecutter-django/ecs/WEB_CONCURRENCY"
          }
        ],
-       "memory": "256",
-       "cpu": "256",
+       "memory": "512",
+       "cpu": "512",
        "essential": true
      }
   ],
