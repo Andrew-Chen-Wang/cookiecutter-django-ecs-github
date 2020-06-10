@@ -5,6 +5,9 @@ AWS ECS Deploy Blue/Green using GitHub Actions.
 
 Sorry if this didn't work. I tried to do this all in ONE go, or one commit. ~ Andrew C. 29 May 2020. Ripperoni.
 
+Edit: It works! It only took so long... and 3 days of finally realizing it security groups is a thing...
+I'm a beginner, so start-ups, take advantage of this repository! ~ Andrew C. 10 June 2020.
+
 Much appreciated code taken from awslabs: https://github.com/awslabs/ecs-nginx-reverse-proxy/tree/master/reverse-proxy
 
 .. image:: https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg
@@ -74,11 +77,33 @@ in the repo's settings. The credentials' names MUST be:
 
 `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
 
-TODO Create security group for web access.
+2. Security Groups - Exposing your ports
 
-TODO Create security group that only faces ALB.
+It took me 10 prolonged days to figure out my security groups were not properly
+configured for my ALB and ECS instances. So follow this carefully.
 
-2. Create two ECR repositories to store your images by running the following:
+Create a security group called WebAccess with a description saying it's for ALB.
+
+The inbound traffic should be of 4 rules:
+- Type HTTP, with custom source type on source 0.0.0.0/0
+- Type HTTP, with custom source type on source ::/0
+- Type HTTPS, with custom source type on source 0.0.0.0/0
+- Type HTTPS, with custom source type on source ::/0
+
+The outbound rules should be left on default, but just in case:
+- Type All traffic, destination type Custom at 0.0.0.0/0
+
+Create another security group. This is for your ECS instances.
+Name it ECS-reverse-proxy (for another website, I'd recommend
+prefixing the name of this with your website name).
+
+The inbound traffic should be 1 rule only:
+- Type All Traffic, with custom source type, and find your first security
+  group (it should say the name of the security group you just created).
+
+The outbound traffic is the same as the first one.
+
+3. Create two ECR repositories to store your images by running the following:
 
 .. code-block:: shell
 
@@ -96,22 +121,26 @@ the one in the GH action.
 
 - Choose EC2 Linux + Networking
 - I chose t2.medium for the instance type for enough memory.
-    - The task definition uses a limited amount of memory as celery
-      isn't a main priority here. As you expand, celery will take up
-      more memory and you'll have to increase the memory capacity for
-      the Django app, which means you'll have to use a different
-      instance type.
+
+  - The task definition uses a limited amount of memory as celery
+    isn't a main priority here. As you expand, celery will take up
+    more memory and you'll have to increase the memory capacity for
+    the Django app, which means you'll have to use a different
+    instance type.
+
 - You can just have one instance since Blue/Green deployments
   will provision a new instance and deregister the old one.
-    - That's the downfall about ECS. You can configure everything
-      in your Dockerfile, but it's a slow build and start time and
-      you wish the instance could just simply be updated...
+
+  - That's the downfall about ECS. You can configure everything
+    in your Dockerfile, but it's a slow build and start time and
+    you wish the instance could just simply be updated...
+
 - I had a key pair from previous EC2 usage. You don't necessarily need it
   but it could be helpful to have on in the future. Yes, you can configure
   an ssh key pair in the future.
-- Create a new VPC
+- Create a new VPC.
 - Choose a subnet. Remember which subnet it is.
-- Create and note your NEW security group! You'll need it for ALB!
+- Use that second security group that I said was for your ECS instances!
 - The IAM role can be the one created by them called ecsInstanceRole.
 
 4. Grant a service trust relationship for newly created IAM role
@@ -123,8 +152,7 @@ can even do a task execution.
 Go to your newly created IAM role and click "Trust relationships"
 
 Edit the trust relationship so that, in the "Service" array, you add
-
-"ecs-tasks.amazonaws.com"
+`ecs-tasks.amazonaws.com`
 
 5. Buy a website in Route 53.
 
@@ -158,23 +186,26 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
   SHOULD'VE WRITTEN DOWN in step 3 when creating your cluster.
 - I'm seeing my website and certificate. If you're not, then look online
   for how to do that and open a PR.
-- Your security group is the one used in creating your cluster. If you forgot it,
-  go to your EC2 dashboard, find your instance, find the security group.
+- Your security group is the first one you created in step 2.
 - Configure routing:
-    - Select new target group
-    - Name it something
-    - The protocol should be HTTP.
-    - Leave health check on default.
+
+  - Select new target group
+  - Name it something
+  - The protocol should be HTTP.
+  - Leave health check on default.
+
 - Don't register any instance.
 - Finally, create it.
 
-Note: Record your load balancer's IPv4 address for the next step.
-
 8. Add your load balancer to your hosted zone
 
-Go back to Route 53. Go to your hosted zone and add an A record
-set with your load balancer's IPv4 address for your domain and its
-www. as well.
+Go back to Route 53. Go to your hosted zone and add 2 A record
+sets. Choose yes for use alias. Find your load balancer.
+
+The difference between each record set is that the first one
+for name can be left blank while the other one should have www.
+This is also how you can have multiple ECS clusters for different
+applications (i.e. with subdomains).
 
 9. Create a task definition.
 
@@ -189,57 +220,81 @@ After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
 
 - Configure Service
-    - Launch type is obviously EC2
-    - Skip the Task Definition section.
-    - Choose your cluster if it's not the one you created.
-    - Enter a service name
-        - default in workflow is cookiecutter-django-service.
-        - If you use the default name, then you don't need to
-        change the one in the GH action.
-    - Number of tasks is 1
-    - The deployments section!
-        - Deployment type: Blue/Green
-            - I explained up top why I chose this one.
-            - Gist of it: CodeDeploy + Websockets + Slow shifting of Traffic.
-        - Deployment configuration: ECS Linear 10 Percent Every 1 Minute
-        - Service role for CodeDeploy: This is the IAM role that you should
-          have for your ECS instances. You can find my configuration down below
-          in the IAM role configuration sections with the one labeled `ECS`
-    - The service role for CodeDeploy should be the same one you created in step 1.
-      It should also, probably, be the only one in that dropdown.
+
+  - Launch type is obviously EC2
+  - Skip the Task Definition section.
+  - Choose your cluster if it's not the one you created.
+  - Enter a service name
+
+    - default in workflow is cookiecutter-django-service.
+    - If you use the default name, then you don't need to
+      change the one in the GH action.
+
+  - Number of tasks is 1
+  - The deployments section!
+
+    - Deployment type: Blue/Green
+
+      - I explained up top why I chose this one.
+      - Gist of it: CodeDeploy + Websockets + Slow shifting of Traffic.
+      - Deployment configuration: ECS Linear 10 Percent Every 1 Minute
+      - Service role for CodeDeploy: This is the IAM role that you should
+        have for your ECS instances. You can find my configuration down below
+        in the IAM role configuration sections with the one labeled `ECS`
+
+  - The service role for CodeDeploy should be the same one you created in step 1.
+    It should also, probably, be the only one in that dropdown.
+
 - Configure Network
-    - Choose application load balancer
-    - Health check grace period should be 30. This option is above the "choose ALB."
-    - For Service IAM Role, I chose AWSServiceRoleForECS. Idk if that'll appear for you though.
-    - Select your load balancer
-    - Container to Load Balance:
-        - Make sure the container name and port is nginx:80
-        - Then press `Add to Load Balancer`
-        - Disable test listener
-    - Choose the target groups you made when making your ALB
-      for Target Group 1 and create a second target group.
-    - Service discovery
-        - Enable it since you've got a website
-        - Create a new, verbose private namespace.
-            - You want something unique... like cookiecutter-django-namespace1
-        - The namespace name can just be left as local
-        - The cluster VPC should be the one you had all along.
-        - Enable ECS task health propagation
-        - DNS records for service discovery should have the
-          container with nginx and TTL be 60 seconds.
+
+  - Choose application load balancer
+  - Health check grace period should be 30. This option is above the "choose ALB."
+  - For Service IAM Role, I chose AWSServiceRoleForECS. Idk if that'll appear for you though.
+  - Select your load balancer
+  - Container to Load Balance:
+
+    - Make sure the container name and port is nginx:80
+    - Then press `Add to Load Balancer`
+
+      - Disable test listener
+
+  - Choose the target groups you made when making your ALB
+    for Target Group 1 and create a second target group.
+  - Service discovery
+
+    - Enable it since you've got a website
+    - Create a new, verbose private namespace.
+
+      - You want something unique... like cookiecutter-django-namespace1
+      - The namespace name can just be left as local
+
+    - The cluster VPC should be the one you had all along.
+
+      - Enable ECS task health propagation
+      - DNS records for service discovery should have the
+        container with nginx and TTL be 60 seconds.
+
 - Autoscaling policy. I didn't touch it and just said "Do not adjust".
   You can adjust it later. (I honestly have no idea myself. You shouldn't
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-11. Let's add our environment variables.
+11. Change your health target ports
+
+While you're creating the service, the review stage should show your
+new target groups. If not, it's fine. The task will stop and regenerate.
+
+Right click on each target group and change the success codes at the bottom
+from `200` to `200,301` (you cannot add spaces).
+
+12. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
 You'll need to add the parameters from `.envs/.production/template.django`.
 
 I've noted which ones you should add.
 
-12. Finally, commit to your repository and let your code be deployed.
+13. Finally, commit to your repository and let your code be deployed.
 
 Cleanup
 -------
@@ -250,14 +305,15 @@ those resources up:
 - You should delete your created IAM roles or users for this test
 - Delete your GitHub secrets
 - Delete your AWS services. Here's a list, in order, of deletion:
-    - Application Load Balancer
-    - Target Groups
-    - EC2 Instances
-    - ECS Service
-    - ECS Cluster
-    - Task definition
-    - CodeDeploy application
-    - AWS Cloud Map namespace
+
+  - Application Load Balancer
+  - Target Groups
+  - EC2 Instances
+  - ECS Service
+  - ECS Cluster
+  - Task definition
+  - CodeDeploy application
+  - AWS Cloud Map namespace
 
 The Caveats in THIS EXAMPLE (easily avoidable)
 ----------------------------------------------
