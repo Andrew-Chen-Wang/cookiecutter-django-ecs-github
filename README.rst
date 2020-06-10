@@ -168,14 +168,22 @@ Go to the EC2 page. Find the Load Balancers section and create a new balancer.
 - Don't register any instance.
 - Finally, create it.
 
-8. Create a task definition.
+Note: Record your load balancer's IPv4 address for the next step.
+
+8. Add your load balancer to your hosted zone
+
+Go back to Route 53. Go to your hosted zone and add an A record
+set with your load balancer's IPv4 address for your domain and its
+www. as well.
+
+9. Create a task definition.
 
 Go to the `aws-task-definition.json` file and copy its contents.
 
 In the ECS dashboard, create a new task definition. Scroll to the
 bottom until you find "configure via JSON." Paste the contents.
 
-9. Create an ECS service.
+10. Create an ECS service.
 
 After you finished creating your cluster, you should arrive in the service
 tab. Create a service.
@@ -224,14 +232,14 @@ tab. Create a service.
   need to worry about it yet anyways).
 - Review and press that shiny blue button to create the service.
 
-10. Let's add our environment variables.
+11. Let's add our environment variables.
 
 Search up Systems Manager. Look for Parameter Store on the left side.
 You'll need to add the parameters from `.envs/.production/template.django`.
 
 I've noted which ones you should add.
 
-11. Finally, commit to your repository and let your code be deployed.
+12. Finally, commit to your repository and let your code be deployed.
 
 Cleanup
 -------
