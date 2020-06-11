@@ -8,59 +8,58 @@
 
 version: '3'
 
-#volumes:
-#  production_postgres_data: {}
-#  production_postgres_data_backups: {}
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
 
 services:
-  django: &django
+  django:
     build:
       context: .
-      dockerfile: compose/production/standalone/django/Dockerfile
+      dockerfile: ./compose/production/ecs/django/Dockerfile
     image: aws_ecs_deploy_production_django
-#    Use Parameter Store or Secrets Manager.
-#    env_file:
-#      - ./.envs/.production/.django
-#      - ./.envs/.production/.postgres
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
     command: /start
 
-#  postgres:
-#    build:
-#      context: .
-#      dockerfile: ./compose/production/postgres/Dockerfile
-#    image: aws_ecs_deploy_production_postgres
-#    volumes:
-#      - production_postgres_data:/var/lib/postgresql/data
-#      - production_postgres_data_backups:/backups
-#    env_file:
-#      - ./.envs/.production/.postgres
-#  awscli:
-#    build:
-#      context: .
-#      dockerfile: ./compose/production/aws/Dockerfile
-#    env_file:
-#      - ./.envs/.production/.django
-#    volumes:
-#      - production_postgres_data_backups:/backups
+  nginx:
+    build:
+      context: .
+      dockerfile: ./compose/production/ecs/nginx/Dockerfile
+    image: aws_ecs_deploy_production_nginx
+    ports:
+    - "0.0.0.0:80:80"
 
-#  redis:
-#    image: redis:5.0
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: aws_ecs_deploy_production_postgres
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+
+  awscli:
+    build:
+      context: .
+      dockerfile: ./compose/production/aws/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - production_postgres_data_backups:/backups
+
+  redis:
+    image: redis:5.0
 
   # You aren't using these in the Dockerfile. Trust me.
   # Read the FAQ section of README to find out how to
   # do the celery stuff
-  celeryworker:
-    <<: *django
-    image: aws_ecs_deploy_production_celeryworker
-    command: /start-celeryworker
 
-  celerybeat:
-    <<: *django
-    image: aws_ecs_deploy_production_celerybeat
-    command: /start-celerybeat
-
-#  I don't recommend using Flower. If you use Flower,
-  # you should just deploy to EC2 instead of ECS.
+  # I don't recommend using Flower. If you use Flower,
+  # you should just deploy to ONE EC2 instance instead of ECS.
   # For EC2 deployment, just SSH and rsync your files over.
 #  flower:
 #    <<: *django

@@ -73,9 +73,8 @@ using the JSON below during the Set Permissions section by pressing
 "Attach existing policies directly" and pressing "Create Policy."
 
 Add the IAM user's credentials to your repo's secrets
-in the repo's settings. The credentials' names MUST be:
-
-`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+in the repo's settings. The credentials' names MUST be `AWS_ACCESS_KEY_ID`
+and `AWS_SECRET_ACCESS_KEY`
 
 2. Security Groups - Exposing your ports
 
@@ -85,12 +84,14 @@ configured for my ALB and ECS instances. So follow this carefully.
 Create a security group called WebAccess with a description saying it's for ALB.
 
 The inbound traffic should be of 4 rules:
+
 - Type HTTP, with custom source type on source 0.0.0.0/0
 - Type HTTP, with custom source type on source ::/0
 - Type HTTPS, with custom source type on source 0.0.0.0/0
 - Type HTTPS, with custom source type on source ::/0
 
 The outbound rules should be left on default, but just in case:
+
 - Type All traffic, destination type Custom at 0.0.0.0/0
 
 Create another security group. This is for your ECS instances.
@@ -98,6 +99,7 @@ Name it ECS-reverse-proxy (for another website, I'd recommend
 prefixing the name of this with your website name).
 
 The inbound traffic should be 1 rule only:
+
 - Type All Traffic, with custom source type, and find your first security
   group (it should say the name of the security group you just created).
 
