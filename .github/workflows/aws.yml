@@ -4,7 +4,7 @@
 # For more configuration, check the action out here:
 # https://github.com/aws-actions/amazon-ecs-deploy-task-definition
 # From there, you can add an appspec.yaml and other stuff AWS GH Action offers.
-
+#
 # Image tags use latest instead of commit sha since we have a repository
 # with all commits anyways. We deploy on every master push.
 # With that justification, we will simply replace the tags.
@@ -21,12 +21,17 @@ on:
       # Trigger this workflow on master push
       - '**'
       # Except when ONLY these dirs are changed
+      # ---------------------------------------
+      # Docs
       - '!docs/**'
-      - '!local.yml'
+      - '!README.rst'
+      # TODO Add my implementation of non-Docker Travis
+      - '!production.yml'
 
-      # Any workflow file EXCEPT for this one will not trigger this workflow.
+      # Only ECR build workflows trigger this workflow.
       - '!.github/workflows/**'
       - '.github/workflows/aws.yml'
+      - '.github/workflows/nginx.yml'
 
 jobs:
   deploy:
@@ -49,29 +54,21 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    # Build nginx
+    # Fill task definition with nginx
     # -------------------------------------------------------
-    - name: Build, tag, and push nginx image to Amazon ECR
-      id: build-nginx-image
+    # The image ID is latest since we don't know if nginx was actually built
+    # but we fill this in anyways since Django image takes awhile to build.
+    - name: Fill in the new nginx image ID in the Amazon ECS task definition
+      id: fill-nginx-image
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: nginx-reverse-proxy
         IMAGE_TAG: latest
-      run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
-        docker build -f compose/production/ecs/nginx/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
-    - name: Fill in the new nginx image ID in the Amazon ECS task definition
-      id: fill-nginx-image
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: aws-task-definition.json
         container-name: nginx
-        image: ${{ steps.build-nginx-image.outputs.image }}
+        image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
     # Build Django app
     # -------------------------------------------------------
@@ -80,7 +77,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: django-app
-        IMAGE_TAG: latest
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and
         # push it to ECR so that it can
@@ -89,7 +86,7 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-    - name: Fill in the new Django image ID in the Amazon ECS task definition
+    - name: Fill in the new Django image ID in Amazon ECS task definition
       id: fill-django-image
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:

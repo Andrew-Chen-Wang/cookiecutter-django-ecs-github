@@ -1,0 +1,54 @@
+# Build and push the nginx image
+#
+# Since my ECR free tier was at stake, and since
+# nginx takes a relatively short amount of time to
+# build anyways, I decided to move the build and
+# push to separate file since nginx configuration
+# doesn't change too often.
+
+name: Build and Push NGINX Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      # Trigger this workflow on master push
+      - 'compose/production/ecs/nginx/**'
+      - '.github/workflows/nginx.yml'
+
+jobs:
+  build-nginx:
+    name: Build NGINX Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        # TODO Change your AWS region here!
+        aws-region: us-east-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Build nginx
+    # -------------------------------------------------------
+    - name: Build, tag, and push nginx image to Amazon ECR
+      id: build-nginx-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: nginx-reverse-proxy
+        IMAGE_TAG: latest
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker build -f compose/production/ecs/nginx/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
