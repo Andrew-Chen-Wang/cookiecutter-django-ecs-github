@@ -58,7 +58,7 @@ jobs:
     # -------------------------------------------------------
     # The image ID is latest since we don't know if nginx was actually built
     # but we fill this in anyways since Django image takes awhile to build.
-    - name: Fill in the new nginx image ID in the Amazon ECS task definition
+    - name: Fill in the nginx image ID in the Amazon ECS task definition
       id: fill-nginx-image
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       env:
@@ -68,7 +68,7 @@ jobs:
       with:
         task-definition: aws-task-definition.json
         container-name: nginx
-        image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        image: "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     # Build Django app
     # -------------------------------------------------------
