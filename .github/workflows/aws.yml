@@ -58,17 +58,22 @@ jobs:
     # -------------------------------------------------------
     # The image ID is latest since we don't know if nginx was actually built
     # but we fill this in anyways since Django image takes awhile to build.
-    - name: Fill in the nginx image ID in the Amazon ECS task definition
-      id: fill-nginx-image
-      uses: aws-actions/amazon-ecs-render-task-definition@v1
+    - name: Build nginx image tag
+      id: create-nginx-image-tag
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: nginx-reverse-proxy
         IMAGE_TAG: latest
+      run: echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Fill in the nginx image ID in the Amazon ECS task definition
+      id: fill-nginx-image
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: aws-task-definition.json
         container-name: nginx
-        image: "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        # FIXME How do you do this manually rather than what I did above.
+        image: ${{ steps.create-nginx-image-tag.outputs.image }}
 
     # Build Django app
     # -------------------------------------------------------
