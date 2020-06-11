@@ -113,7 +113,7 @@ The outbound traffic is the same as the first one.
 Replace the region with your AWS region, and make sure you change it in the
 `.github/workflows/aws.yml` file, as well.
 
-3. Create an ECS cluster.
+4. Create an ECS cluster.
 Replace the values for `cluster` in the aws workflow
 with your cluster name. The default is "cookiecutter-django".
 I guess you could just write that one and not need to change
@@ -143,7 +143,7 @@ the one in the GH action.
 - Use that second security group that I said was for your ECS instances!
 - The IAM role can be the one created by them called ecsInstanceRole.
 
-4. Grant a service trust relationship for newly created IAM role
+5. Grant a service trust relationship for newly created IAM role
 
 In order to add our environment variables via our task definition, we must
 make sure the IAM role (above, hopefully it was ecsInstanceRole)
@@ -248,7 +248,7 @@ tab. Create a service.
 - Configure Network
 
   - Choose application load balancer
-  - Health check grace period should be 30. This option is above the "choose ALB."
+  - Health check grace period should be 15 seconds. This option is above the "choose ALB."
   - For Service IAM Role, I chose AWSServiceRoleForECS. Idk if that'll appear for you though.
   - Select your load balancer
   - Container to Load Balance:
@@ -509,3 +509,12 @@ Plus, it's nice seeing my painful moments and learning from them.
 It's like the cliche standing back and being proud of your work.
 
 But this was a painful 10 hours... I started at 12 and now it's 22:11.
+
+What did you learn from this?
+
+Always start small. On 10 June 2020, I finally figured to try and start
+small with a single EC2 with a load balancer (however, I will admit that
+I suspected the security groups was an issue for the most part).
+
+On the same day, I finally got it to work. So, always start small, and
+then try out this methodology.

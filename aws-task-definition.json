@@ -51,6 +51,10 @@
          {
            "name": "WEB_CONCURRENCY",
            "valueFrom": "arn:aws:ssm:us-east-2:542979720405:parameter/cookiecutter-django/ecs/WEB_CONCURRENCY"
+         },
+         {
+           "name": "SENTRY_DSN",
+           "valueFrom": "arn:aws:ssm:us-east-2:542979720405:parameter/cookiecutter-django/ecs/SENTRY_DSN"
          }
        ],
        "memory": "512",
