@@ -64,6 +64,13 @@ Deployment Instructions
 -----------------------
 
 The following details how to deploy this application stack to ECS.
+If you need to also setup your database and cache, follow 
+[issue #9](https://github.com/Andrew-Chen-Wang/cookiecutter-django-ecs-github/issues/9).
+You may want to get the hang of the following first, specifically security groups in step 1.
+Also note that I didn't write that in the tutorial because it's spare and
+came from my memory from a couple months back. I didn't think it was detailed
+enough for this tutorial.
+
 It's a lot of instructions since there are so many services:
 
 1. You must have an IAM user with the correct permissions that you can find at the
